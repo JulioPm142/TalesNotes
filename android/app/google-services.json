@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "733174887176",
+    "firebase_url": "https://authteste-9c0cc-default-rtdb.firebaseio.com",
+    "project_id": "authteste-9c0cc",
+    "storage_bucket": "authteste-9c0cc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:733174887176:android:0f97e4c575932c308732bd",
+        "android_client_info": {
+          "package_name": "com.authteste"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD18T9wIB02kcGolH3MjQCciUfdeE41yio"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:733174887176:android:81d50c4222df951f8732bd",
+        "android_client_info": {
+          "package_name": "com.talesnotes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD18T9wIB02kcGolH3MjQCciUfdeE41yio"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
