@@ -29,7 +29,6 @@ const App = () => {
     }
   }, []);
 
-
   const { width, height } = Dimensions.get('window');
 
   const widthAndHeight = Math.min(width) * 0.9;
@@ -70,13 +69,14 @@ const App = () => {
         />
       </View>
       <View style={styles.legendContainer}>
-          {legendData.map((item, index) => (
-            <View key={index} style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-              <Text>{item.label}</Text>
-            </View>
-          ))}
-        </View>     
+        {legendData.map((item, index) => (
+          <View key={index} style={styles.legendItem}>
+            <View style={[styles.legendColor, { backgroundColor: item.color }]} />
+            <Text>{item.label}s</Text>
+            <Text style={styles.legendText}>{index === 0 ? feita : index === 1 ? pendente : vencida}</Text>
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 };
@@ -95,20 +95,27 @@ const styles = {
   },  
   legendContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap:-50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    flex: 1,
   },
   legendItem: {
-    marginTop:30,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    marginRight: 10,
-    
+    marginRight: 20,
+    width:90,
+    height:80,
   },
   legendColor: {
-    width: 10,
-    height: 10,
-    marginRight: 5,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginBottom: 1,
+  },
+  legendText: {
+    color: '#555',
+    fontSize: 14,
   },
 };
 
