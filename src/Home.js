@@ -146,7 +146,7 @@ const Home = ({ navigation }) => {
       const newTask = {
         completo: false,
         expirado: false,
-        imagem: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/HD_transparent_picture.png/640px-HD_transparent_picture.png",
+        imagem: "",
         texto: textInput,
         titulo: textInput,
         data:'00-00-0000'

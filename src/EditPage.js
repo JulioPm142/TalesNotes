@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import database from '@react-native-firebase/database';
-import { launchCamera } from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Notifications } from 'react-native-notifications';
@@ -23,14 +23,14 @@ const Edit = ({ navigation, route }) => {
   const [userInput, setUserInput] = useState('');
   const [task, setTask] = useState(null);
   const [imageUri, setImageUri] = useState(null);
-  const [image, setImage] = useState(
-    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/HD_transparent_picture.png/640px-HD_transparent_picture.png'
-  );
+  const [image, setImage] = useState('');
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState('');
   const [showNewButton, setShowNewButton] = useState(false);
   const [showNewButton3, setShowNewButton3] = useState(false);
   const [firstButtonClicked, setFirstButtonClicked] = useState(false);
+  const [salvar, setSalvar] = useState(false)
+  const [imageModal, setImageModal] = useState(false)
 
   const toggleNewButton = () => {
     setShowNewButton(!showNewButton);
@@ -38,42 +38,74 @@ const Edit = ({ navigation, route }) => {
     setFirstButtonClicked(!firstButtonClicked);
   };
 
+  const toggleImageModal = () => {
+    setImageModal(!imageModal)
+  }
+
   const handleInputChange = (text) => {
     setUserInput(text);
   };
 
   const saveUserInput = async () => {
-    try {
-      const user = auth().currentUser;
-      if (user) {
-        const userTaskRef = database().ref(`Usuarios/${user.uid}/Tasks/${id}`);
-        userTaskRef
-          .update({
-            texto: userInput,
-            imagem: image,
-            data: selectedDate
-              ? selectedDate.toISOString().split('T')[0]
-              : '00-00-0000',
-          })
-          .then(() => {
-            Alert.alert('Informação Salva', 'Seus Dados Foram Salvos com sucesso', [
-              { text: 'OK', onPress: () => console.log('Alert closed') },
-            ]);
-          })
-          .catch((error) => {
-            console.error('Erro ao salvar detalhes da tarefa:', error);
-          });
-      } else {
-        console.log(
-          'Usuário não autenticado. Não é possível salvar detalhes da tarefa.'
-        );
-      }
-    } catch (error) {
-      console.error('Error saving user input: ', error);
-    }
-    uploadImage();
+    console.log(image);
     MarcarNotificacao();
+    if (salvar == true) {
+      try {
+        const user = auth().currentUser;
+        if (user) {
+          const userTaskRef = database().ref(`Usuarios/${user.uid}/Tasks/${id}`);
+          userTaskRef
+            .update({
+              texto: userInput,
+              imagem: image,
+              data: selectedDate
+                ? selectedDate.toISOString().split('T')[0]
+                : '00-00-0000',
+            })
+            .then(() => {
+              Alert.alert('Informação Salva', 'Seus Dados Foram Salvos com sucesso', [
+                { text: 'OK', onPress: () => console.log('Alert closed') },
+              ]);
+            })
+            .catch((error) => {
+              console.error('Erro ao salvar detalhes da tarefa:', error);
+            });
+        } else {
+          console.log(
+            'Usuário não autenticado. Não é possível salvar detalhes da tarefa.'
+          );
+        }
+      } catch (error) {
+        console.error('Error saving user input: ', error);
+      }
+      if (image != '') {
+        uploadImage();
+      }
+    }
   };
+
+
+  const pegarImagem = () => {
+    let options = {
+      storageOptions: {
+        path: 'image',
+      },
+    };
+    launchImageLibrary(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error:', response.error);
+      } else {
+        console.log(response.assets.uri);
+        let a = response.assets["0"];
+        console.log(a.uri);
+        setImage(a.uri);
+      }
+
+    })
+
+  }
 
   const getTaskFromDatabase = (taskId) => {
     const user = auth().currentUser;
@@ -200,19 +232,26 @@ const Edit = ({ navigation, route }) => {
         // Agendamento da notificação para até 2 dias atrás
         Notifications.postLocalNotification({
           title: 'Tarefa Agendada Vencida',
-          body: task.titulo + ' está com atraso',
+          body: "A tarefa: '" + task.titulo + "' está em atraso",
           fireDate: selectedTimestamp / 1000, // Converte para segundos
           data: {},
         });
 
         // Limpa a data após o agendamento
         setSelectedDate(null);
+        setSalvar(!salvar)
       } else {
         // Informa o usuário que a data selecionada está muito no passado
-        console.warn('Não é possível agendar notificações para datas no passado');
+        Alert.alert('Data no passado', 'não é possível salvar datas no passado')
+
       }
+
     }
   };
+
+  const removeImagem = () => {
+    setImage('')
+  }
 
   useEffect(() => {
     getTaskFromDatabase(id);
@@ -221,7 +260,9 @@ const Edit = ({ navigation, route }) => {
   return (<>
     <View style={styles.container}>
       <View style={styles.container}>
-        <Image source={{ uri: image }} style={styles.image} />
+        {image == '' ? (
+          (null)
+        ) : <Image source={{ uri: image }} style={styles.image} />}
         <TextInput
           placeholder="No que está pensando?"
           style={styles.input}
@@ -236,15 +277,26 @@ const Edit = ({ navigation, route }) => {
     <View>
       {showNewButton && (
         <View style={[styles.newButtonContainer]}>
-          <TouchableOpacity style={[styles.newButton, { marginTop: 5 }]} onPress={showDatePicker} >
+          <TouchableOpacity style={[styles.newButton, { marginTop: 5 }]} onPress={() => { showDatePicker(), toggleNewButton() }} >
             <Icon name='date-range' size={45} color={COLORS.white}></Icon>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.newButton3} onPress={saveUserInput}>
+
+          <TouchableOpacity style={styles.newButton3} onPress={() => { saveUserInput(), toggleNewButton() }}>
             <Icon name='save' size={45} color={COLORS.white}></Icon>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.newButton]} onPress={openCamera}>
-            <Icon name='add-photo-alternate' size={45} color={COLORS.white}></Icon>
-          </TouchableOpacity>
+
+          {image === '' ? (
+            <TouchableOpacity style={[styles.newButton]} onPress={() => { toggleImageModal(), toggleNewButton() }}>
+              <Icon name='add-photo-alternate' size={45} color={COLORS.white}></Icon>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={[styles.newButton]} onPress={() => { removeImagem(), toggleNewButton() }}>
+              <Icon name='hide-image' size={45} color={COLORS.white}></Icon>
+            </TouchableOpacity>
+          )}
+
+
+
         </View>
       )}
       {firstButtonClicked ? (
@@ -265,11 +317,37 @@ const Edit = ({ navigation, route }) => {
       />
     </View>
 
+    {imageModal ? (<View style={styles.selectImage}>
+
+      <Text style={{ textAlign: 'center', fontSize: 25, color: '#eee', paddingTop: 20 }}>Abrir com?</Text>
+      <View style={styles.fontContainer}>
+
+        <TouchableOpacity onPress={() => { openCamera(), toggleImageModal() }} style={styles.iconContainer}>
+          <Icon name='camera-alt' size={99} color='#fff'></Icon>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => { pegarImagem(), toggleImageModal() }} style={styles.iconContainer}>
+          <Icon name='image' size={99} color='#fff'></Icon>
+        </TouchableOpacity>
+
+      </View>
+
+      {imageModal ? (
+          <TouchableOpacity onPress={() => { toggleImageModal() }} style={styles.smallButton}>
+            <Icon name='close' size={35} color='#000'></Icon>
+          </TouchableOpacity>
+        ) : (null)}
+
+      {/* <Icon name='add' size={40} color='#000'></Icon> */}
+
+
+    </View>) : (null)}
+
   </>
   );
 };
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -277,9 +355,11 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     padding: 10,
     backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
-    width: 300,
+    width: width/100*80,
     height: 300,
   },
   button: {
@@ -293,13 +373,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
+    textAlign: 'center',
     height: 50,
-    paddingHorizontal: 20,
+    width:width/100*90,
     elevation: 40,
     backgroundColor: '#111',
     flex: 1,
     marginVertical: 20,
-    marginRight: 20,
     borderRadius: 30,
     color: '#eee',
   },
@@ -336,12 +416,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    alignSelf: 'center', // Adicione esta linha para centralizar o botão horizontalmente
+    alignSelf: 'center',
   },
   closeButton: {
     color: '#fff',
     fontSize: 24,
   },
+  selectImage: {
+    position: 'absolute',
+    width: width - (width / 100) * 5,
+    height: height / 100 * 30,
+    backgroundColor: '#222',
+    borderRadius: 20,
+    top: '83%',
+    left: '50%',
+    marginLeft: -(width - (width / 100) * 5) / 2,
+    marginTop: -(height / 100 * 30) / 2,
+  },
+  fontContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    paddingTop: 20,
+    gap: width / 8,
+  },
+  iconContainer: {
+    height: 100,
+    width: 100,
+    backgroundColor: '#000',
+    borderRadius: 15,
+  },
+  actionIcon: {
+    height: 25,
+    width: 25,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#222',
+    marginLeft: 5,
+    borderRadius: 5,
+  }
+
 });
 
 export default Edit;
