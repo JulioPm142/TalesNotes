@@ -154,7 +154,7 @@ const Home = ({ navigation }) => {
         imagem: "",
         texto: textInput,
         titulo: textInput,
-        data: datapadrao
+        data: datapadrao.toISOString()
       };
       addTaskToDatabase(newTask);
       setTextInput("");
