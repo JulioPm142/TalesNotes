@@ -67,7 +67,7 @@ const Edit = ({ navigation, route }) => {
 
   const showNotification = () => {
     // Verifica se selectedDate é uma data válida
-    
+
     if (selectedDate instanceof Date && !isNaN(selectedDate)) {
       // Formata a data para exibição
       const formattedDate = format(selectedDate, "dd/MM/yyyy - HH:mm", {
@@ -83,7 +83,6 @@ const Edit = ({ navigation, route }) => {
       // Verifica se a selectedDate é menor que a data atual
       if (selectedDate < currentDate) {
         // Se for, mostra uma mensagem de erro
-        Alert.alert("Erro", "A data selecionada é no passado: " + formattedDate);
         setSalvar(false);
       } else {
         setSalvar(true);
@@ -108,9 +107,17 @@ const Edit = ({ navigation, route }) => {
   };
 
   const saveUserInput = async () => {
+    const formattedDate = format(selectedDate, "dd/MM/yyyy - HH:mm", {
+      locale: ptBR, // ou a localização desejada
+    });
+
+    // Obtém a data atual
+    const currentDate = new Date();
+
+    // Ajusta a selectedDate para ter a mesma data, mas com a hora atual + 10 segundos
     showNotification();
-    console.log('salvar', salvar);
-    if (salvar == true) {
+    if (selectedDate < currentDate) { Alert.alert('Data invalida', 'Data está marcada no passado ' + selectedDate) }
+    else {
       try {
         const user = auth().currentUser;
         if (user) {
@@ -282,6 +289,12 @@ const Edit = ({ navigation, route }) => {
 
   return (
     <>
+      <View style={{ paddingRight: 10 }}>
+        <View style={styles.vencimentoContainer}>
+          <Text style={styles.VencimentoTexto}>Marcado para: {formattedDatePadrao.toString()} </Text>
+        </View>
+      </View>
+
       <View style={styles.container}>
         <View style={styles.container}>
           {image == '' ? (
@@ -324,46 +337,46 @@ const Edit = ({ navigation, route }) => {
             <Icon name='close' size={35} color='#000'></Icon>
           </TouchableOpacity>
         ) : (
-        <TouchableOpacity onPress={toggleNewButton} style={styles.smallButton}>
-          <Icon name='add' size={40} color='#000'></Icon>
-        </TouchableOpacity>
-      )}
+          <TouchableOpacity onPress={toggleNewButton} style={styles.smallButton}>
+            <Icon name='add' size={40} color='#000'></Icon>
+          </TouchableOpacity>
+        )}
 
-      <DateTimePickerModal
-        isVisible={isDatePickerVisible}
-        mode="date"
-        onConfirm={handleDateConfirm}
-        onCancel={hideDatePicker}
-      />
-    </View>
-
-    {imageModal ? (<View style={styles.selectImage}>
-
-      <Text style={{ textAlign: 'center', fontSize: 25, color: '#eee', paddingTop: 20 }}>Abrir com?</Text>
-      <View style={styles.fontContainer}>
-
-        <TouchableOpacity onPress={() => { openCamera(), toggleImageModal() }} style={styles.iconContainer}>
-          <Icon name='camera-alt' size={99} color='#fff'></Icon>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => { pegarImagem(), toggleImageModal() }} style={styles.iconContainer}>
-          <Icon name='image' size={99} color='#fff'></Icon>
-        </TouchableOpacity>
-
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleDateConfirm}
+          onCancel={hideDatePicker}
+        />
       </View>
 
-      {imageModal ? (
-        <TouchableOpacity onPress={() => { toggleImageModal() }} style={styles.smallButton}>
-          <Icon name='close' size={35} color='#000'></Icon>
-        </TouchableOpacity>
-      ) : (null)}
+      {imageModal ? (<View style={styles.selectImage}>
 
-      {/* <Icon name='add' size={40} color='#000'></Icon> */}
+        <Text style={{ textAlign: 'center', fontSize: 25, color: '#eee', paddingTop: 20 }}>Abrir com?</Text>
+        <View style={styles.fontContainer}>
+
+          <TouchableOpacity onPress={() => { openCamera(), toggleImageModal() }} style={styles.iconContainer}>
+            <Icon name='camera-alt' size={99} color='#fff'></Icon>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => { pegarImagem(), toggleImageModal() }} style={styles.iconContainer}>
+            <Icon name='image' size={99} color='#fff'></Icon>
+          </TouchableOpacity>
+
+        </View>
+
+        {imageModal ? (
+          <TouchableOpacity onPress={() => { toggleImageModal() }} style={styles.smallButton}>
+            <Icon name='close' size={35} color='#000'></Icon>
+          </TouchableOpacity>
+        ) : (null)}
+
+        {/* <Icon name='add' size={40} color='#000'></Icon> */}
 
 
-    </View>) : (null)}
+      </View>) : (null)}
 
-  </>
+    </>
   );
 };
 
@@ -476,7 +489,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#222',
     marginLeft: 5,
     borderRadius: 5,
-  }
+  },
+  vencimentoContainer: {
+    display: 'flex',
+    flexDirection: 'row-reverse',
+    paddingTop: height * 0.01,
+    
+
+  },
+  VencimentoTexto: {
+    paddingTop:8,
+    height: height * 0.045,
+    width: width * 0.6,
+    color: '#fff',
+    fontSize: 10,
+    textAlign: 'center',
+    backgroundColor: '#222',
+    borderRadius:10,
+
+  },
 
 });
 
