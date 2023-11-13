@@ -29,12 +29,14 @@ const App = () => {
     }
   }, []);
 
+  const today = new Date(new Date().toISOString().split('T')[0]);
   const { width, height } = Dimensions.get('window');
 
   const widthAndHeight = Math.min(width) * 0.9;
   let feita = 0;
   let vencida = 0;
-  let pendente = 1;
+  let pendente = 0;
+  let vazio = 1;
 
   const legendData = [
     { label: 'Feita', color: '#F44336' },
@@ -43,19 +45,24 @@ const App = () => {
   ];
 
   todos.forEach((item) => {
-    if (item.expirado) {
-      vencida += 1;
+    let data = new Date(item.data.split(' ')[1]);
+    if(item.completo) {
+      feita += 1
     } else {
-      if (item.completo) {
-        feita += 1;
+      if(data.getFullYear() >= today.getFullYear() && data.getMonth() >= today.getMonth() && data.getDate() >= today.getDate()) {
+        pendente += 1
       } else {
-        pendente += 1;
+        vencida += 1
       }
     }
   });
 
-  const series = [feita, pendente, vencida];
-  const sliceColor = ["#F44336", "#2196F3", "#FFEB3B"];
+  if(feita > 0 || vencida > 0 || pendente > 0) {
+    vazio = 0
+  }
+
+  const series = [feita, pendente, vencida,vazio];
+  const sliceColor = ["#F44336", "#2196F3", "#FFEB3B","#bbbbbb"];
 
   return (
     <ScrollView style={styles.scrollContainer}>
@@ -93,17 +100,17 @@ const styles = {
     fontSize: 24,
     margin: 10,
   },  
-  legendContainer: {
+   legendContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
     flex: 1,
+    gap:10,
   },
   legendItem: {
     flexDirection: 'column',
     alignItems: 'center',
-    marginRight: 20,
     width:90,
     height:80,
   },

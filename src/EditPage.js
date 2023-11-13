@@ -15,7 +15,10 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Notifications } from 'react-native-notifications';
-import Icon from 'react-native-vector-icons/MaterialIcons'
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import PushNotification from 'react-native-push-notification';
+import { format, parseISO, differenceInMilliseconds, addSeconds, setSeconds, addWeeks } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
 const Edit = ({ navigation, route }) => {
   const COLORS = { primary: '#1f145c', white: '#eee' };
@@ -29,8 +32,19 @@ const Edit = ({ navigation, route }) => {
   const [showNewButton, setShowNewButton] = useState(false);
   const [showNewButton3, setShowNewButton3] = useState(false);
   const [firstButtonClicked, setFirstButtonClicked] = useState(false);
-  const [salvar, setSalvar] = useState(false)
-  const [imageModal, setImageModal] = useState(false)
+  const [salvar, setSalvar] = useState(false);
+  const [imageModal, setImageModal] = useState(false);
+
+  let atual = new Date(); // Mova a declaração de `atual` para este ponto
+  const datapadrao = addWeeks(atual, 1);
+
+  const formattedDatePadrao = format(datapadrao, "dd/MM/yyyy - HH:mm", {
+    locale: ptBR, // ou a localização desejada
+  });
+
+  useEffect(() => {
+    getTaskFromDatabase(id);
+  }, [id]);
 
   const toggleNewButton = () => {
     setShowNewButton(!showNewButton);
@@ -39,16 +53,63 @@ const Edit = ({ navigation, route }) => {
   };
 
   const toggleImageModal = () => {
-    setImageModal(!imageModal)
-  }
+    setImageModal(!imageModal);
+  };
 
   const handleInputChange = (text) => {
     setUserInput(text);
   };
 
+  const formatDateTime = (dateTimeString, formatString) => {
+    const date = parseISO(dateTimeString);
+    return format(date, formatString);
+  };
+
+  const showNotification = () => {
+    // Verifica se selectedDate é uma data válida
+    
+    if (selectedDate instanceof Date && !isNaN(selectedDate)) {
+      // Formata a data para exibição
+      const formattedDate = format(selectedDate, "dd/MM/yyyy - HH:mm", {
+        locale: ptBR, // ou a localização desejada
+      });
+
+      // Obtém a data atual
+      const currentDate = new Date();
+
+      // Ajusta a selectedDate para ter a mesma data, mas com a hora atual + 10 segundos
+      const notificationDate = setSeconds(addSeconds(selectedDate, 10), currentDate.getSeconds());
+
+      // Verifica se a selectedDate é menor que a data atual
+      if (selectedDate < currentDate) {
+        // Se for, mostra uma mensagem de erro
+        Alert.alert("Erro", "A data selecionada é no passado: " + formattedDate);
+        setSalvar(false);
+      } else {
+        setSalvar(true);
+        // Notifica na selectedDate
+        PushNotification.localNotificationSchedule({
+          channelId: "test-channel",
+          title: "Tarefa pendente",
+          message: `A sua tarefa ${task.titulo} irá vencer hoje`,
+          date: notificationDate,
+          allowWhileIdle: true,
+        });
+
+        PushNotification.localNotification({
+          channelId: "test-channel",
+          title: `Tarefa marcada!`,
+          message: `Tarefa marcada para ${formattedDate}`,
+        });
+      }
+    } else {
+      Alert.alert("Erro", "selectedDate não é uma data válida: " + selectedDate);
+    }
+  };
+
   const saveUserInput = async () => {
-    console.log(image);
-    MarcarNotificacao();
+    showNotification();
+    console.log('salvar', salvar);
     if (salvar == true) {
       try {
         const user = auth().currentUser;
@@ -84,7 +145,6 @@ const Edit = ({ navigation, route }) => {
     }
   };
 
-
   const pegarImagem = () => {
     let options = {
       storageOptions: {
@@ -102,10 +162,8 @@ const Edit = ({ navigation, route }) => {
         console.log(a.uri);
         setImage(a.uri);
       }
-
-    })
-
-  }
+    });
+  };
 
   const getTaskFromDatabase = (taskId) => {
     const user = auth().currentUser;
@@ -122,7 +180,7 @@ const Edit = ({ navigation, route }) => {
             setUserInput(taskData.texto);
             setImage(taskData.imagem);
             setSelectedDate(
-              taskData.data ? new Date(taskData.data) : null
+              taskData.data ? new Date(taskData.data) : datapadrao
             );
           }
         })
@@ -168,14 +226,14 @@ const Edit = ({ navigation, route }) => {
 
   const handleDateConfirm = (date) => {
     hideDatePicker();
-    setSelectedDate(
-      new Date(date.getTime() - 24 * 60 * 60 * 1000)
-    ); // Adiciona um dia à data selecionada
+    const currentDate = new Date();
+    const selectedTime = new Date(date);
+    selectedTime.setHours(currentDate.getHours(), currentDate.getMinutes(), currentDate.getSeconds() + 20);
+    setSelectedDate(selectedTime);
   };
 
   const uploadImage = async () => {
     const url = image;
-
     try {
       const uploadTask = await storage()
         .ref(`imagens/${id}`)
@@ -217,93 +275,55 @@ const Edit = ({ navigation, route }) => {
     }
   };
 
-  const MarcarNotificacao = () => {
-    if (selectedDate) {
-      // Obtém o timestamp em milissegundos da data selecionada
-      const selectedTimestamp = selectedDate.getTime();
-
-      // Obtém o timestamp atual em milissegundos
-      const currentTimestamp = Date.now();
-
-      // Calcula a diferença em milissegundos entre a data selecionada e a data atual
-      const timeDifference = currentTimestamp - selectedTimestamp;
-
-      if (timeDifference <= 2 * 24 * 60 * 60 * 1000) {
-        // Agendamento da notificação para até 2 dias atrás
-        Notifications.postLocalNotification({
-          title: 'Tarefa Agendada Vencida',
-          body: "A tarefa: '" + task.titulo + "' está em atraso",
-          fireDate: selectedTimestamp / 1000, // Converte para segundos
-          data: {},
-        });
-
-        // Limpa a data após o agendamento
-        setSelectedDate(null);
-        setSalvar(!salvar)
-      } else {
-        // Informa o usuário que a data selecionada está muito no passado
-        Alert.alert('Data no passado', 'não é possível salvar datas no passado')
-
-      }
-
-    }
-  };
 
   const removeImagem = () => {
-    setImage('')
-  }
+    setImage('');
+  };
 
-  useEffect(() => {
-    getTaskFromDatabase(id);
-  }, [id]);
-
-  return (<>
-    <View style={styles.container}>
+  return (
+    <>
       <View style={styles.container}>
-        {image == '' ? (
-          (null)
-        ) : <Image source={{ uri: image }} style={styles.image} />}
-        <TextInput
-          placeholder="No que está pensando?"
-          style={styles.input}
-          value={userInput}
-          onChangeText={handleInputChange}
-          multiline={true}
-        />
-      </View>
-    </View>
-
-
-    <View>
-      {showNewButton && (
-        <View style={[styles.newButtonContainer]}>
-          <TouchableOpacity style={[styles.newButton, { marginTop: 5 }]} onPress={() => { showDatePicker(), toggleNewButton() }} >
-            <Icon name='date-range' size={45} color={COLORS.white}></Icon>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.newButton3} onPress={() => { saveUserInput(), toggleNewButton() }}>
-            <Icon name='save' size={45} color={COLORS.white}></Icon>
-          </TouchableOpacity>
-
-          {image === '' ? (
-            <TouchableOpacity style={[styles.newButton]} onPress={() => { toggleImageModal(), toggleNewButton() }}>
-              <Icon name='add-photo-alternate' size={45} color={COLORS.white}></Icon>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={[styles.newButton]} onPress={() => { removeImagem(), toggleNewButton() }}>
-              <Icon name='hide-image' size={45} color={COLORS.white}></Icon>
-            </TouchableOpacity>
-          )}
-
-
-
+        <View style={styles.container}>
+          {image == '' ? (
+            (null)
+          ) : <Image source={{ uri: image }} style={styles.image} />}
+          <TextInput
+            placeholder="No que está pensando?"
+            style={styles.input}
+            value={userInput}
+            onChangeText={handleInputChange}
+            multiline={true}
+          />
         </View>
-      )}
-      {firstButtonClicked ? (
-        <TouchableOpacity onPress={toggleNewButton} style={styles.smallButton}>
-          <Icon name='close' size={35} color='#000'></Icon>
-        </TouchableOpacity>
-      ) : (
+      </View>
+
+      <View>
+        {showNewButton && (
+          <View style={[styles.newButtonContainer]}>
+            <TouchableOpacity style={[styles.newButton, { marginTop: 5 }]} onPress={() => { showDatePicker(), toggleNewButton() }} >
+              <Icon name='date-range' size={45} color={COLORS.white}></Icon>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.newButton3} onPress={() => { saveUserInput(), toggleNewButton() }}>
+              <Icon name='save' size={45} color={COLORS.white}></Icon>
+            </TouchableOpacity>
+
+            {image === '' ? (
+              <TouchableOpacity style={[styles.newButton]} onPress={() => { toggleImageModal(), toggleNewButton() }}>
+                <Icon name='add-photo-alternate' size={45} color={COLORS.white}></Icon>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={[styles.newButton]} onPress={() => { removeImagem(), toggleNewButton() }}>
+                <Icon name='hide-image' size={45} color={COLORS.white}></Icon>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+        {firstButtonClicked ? (
+          <TouchableOpacity onPress={toggleNewButton} style={styles.smallButton}>
+            <Icon name='close' size={35} color='#000'></Icon>
+          </TouchableOpacity>
+        ) : (
         <TouchableOpacity onPress={toggleNewButton} style={styles.smallButton}>
           <Icon name='add' size={40} color='#000'></Icon>
         </TouchableOpacity>
@@ -333,10 +353,10 @@ const Edit = ({ navigation, route }) => {
       </View>
 
       {imageModal ? (
-          <TouchableOpacity onPress={() => { toggleImageModal() }} style={styles.smallButton}>
-            <Icon name='close' size={35} color='#000'></Icon>
-          </TouchableOpacity>
-        ) : (null)}
+        <TouchableOpacity onPress={() => { toggleImageModal() }} style={styles.smallButton}>
+          <Icon name='close' size={35} color='#000'></Icon>
+        </TouchableOpacity>
+      ) : (null)}
 
       {/* <Icon name='add' size={40} color='#000'></Icon> */}
 
@@ -359,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   image: {
-    width: width/100*80,
+    width: width / 100 * 80,
     height: 300,
   },
   button: {
@@ -375,7 +395,7 @@ const styles = StyleSheet.create({
   input: {
     textAlign: 'center',
     height: 50,
-    width:width/100*90,
+    width: width / 100 * 90,
     elevation: 40,
     backgroundColor: '#111',
     flex: 1,

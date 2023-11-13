@@ -4,6 +4,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import auth from '@react-native-firebase/auth';
 import database from '@react-native-firebase/database';
+import { format, parseISO, differenceInMilliseconds, addSeconds, setSeconds, addWeeks } from 'date-fns';
+
 
 const COLORS = { primary: '#1f145c', white: '#eee' };
 
@@ -143,13 +145,16 @@ const Home = ({ navigation }) => {
     if (textInput === '') {
       Alert.alert("Erro", "Adicione um Título");
     } else {
+      let atual = new Date(); // Mova a declaração de `atual` para este ponto
+      const datapadrao = addWeeks(atual, 1);
+
       const newTask = {
         completo: false,
         expirado: false,
         imagem: "",
         texto: textInput,
         titulo: textInput,
-        data:'00-00-0000'
+        data: datapadrao
       };
       addTaskToDatabase(newTask);
       setTextInput("");

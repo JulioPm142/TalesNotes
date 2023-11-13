@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import database from '@react-native-firebase/database';
+import PushNotification from "react-native-push-notification";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogged, setIsLogged] = useState(false);
+
+  const createChannels = () => {
+    PushNotification.createChannel(
+      {
+        channelId: "test-channel",
+        channelName: "Test Channel"
+      }
+    )
+  }
+
+  useEffect(() => {
+    createChannels();
+  }, []);
+
 
   function signUp() {
     auth()
@@ -59,7 +74,7 @@ export default function LoginScreen() {
         </>
       ) : (
         <>
-          <Text style={{color:'#fff',fontSize:28,textAlign:'center',paddingBottom:10}}>Faça login para continuar</Text>
+          <Text style={{ color: '#fff', fontSize: 28, textAlign: 'center', paddingBottom: 10 }}>Faça login para continuar</Text>
           <TextInput
             style={styles.input}
             placeholder="E-mail"
@@ -104,7 +119,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   buttonContainer: {
-    paddingTop:20,
+    paddingTop: 20,
     width: 250,
     marginTop: 10,
   },
