@@ -45,7 +45,7 @@ const App = () => {
   ];
 
   todos.forEach((item) => {
-    let data = new Date(item.data.split(' ')[1]);
+    let data = new Date(item.data.split('T')[0]);
     if(item.completo) {
       feita += 1
     } else {
