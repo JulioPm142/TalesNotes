@@ -241,14 +241,16 @@ const Edit = ({ navigation, route }) => {
 
   const uploadImage = async () => {
     const url = image;
+    const user = auth().currentUser;
     try {
+      let nUserid = user.uid.toString()
       const uploadTask = await storage()
-        .ref(`imagens/${id}`)
+        .ref(`users/${nUserid}/tasks/${id}`)
         .putFile(url);
 
       if (uploadTask.state === 'success') {
         const downloadURL = await storage()
-          .ref(`imagens/${id}`)
+          .ref(`users/${nUserid}/tasks/${id}`)
           .getDownloadURL();
         console.log('URL da imagem após o upload:', downloadURL);
         setImageUri(downloadURL);
@@ -278,7 +280,7 @@ const Edit = ({ navigation, route }) => {
         }
       }
     } catch (error) {
-      console.error('Erro ao fazer upload da imagem:', error);
+      console.error('Erro ao fazer upload da imagem:');
     }
   };
 
@@ -494,18 +496,18 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row-reverse',
     paddingTop: height * 0.01,
-    
+
 
   },
   VencimentoTexto: {
-    paddingTop:8,
+    paddingTop: 8,
     height: height * 0.045,
     width: width * 0.6,
     color: '#fff',
     fontSize: 10,
     textAlign: 'center',
     backgroundColor: '#222',
-    borderRadius:10,
+    borderRadius: 10,
 
   },
 

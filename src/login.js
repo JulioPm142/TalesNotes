@@ -22,6 +22,10 @@ export default function LoginScreen() {
     createChannels();
   }, []);
 
+  useEffect(() => {
+    pegarProfile();
+}, []);
+
 
   function signUp() {
     auth()

@@ -16,7 +16,6 @@ const Home = ({ navigation }) => {
     // {titulo:'titulo',texto:'texto', completo: false, expirado: false, imagem: "https://www.educlub.com.br/wp-content/uploads/2020/02/palavras-com-a-letra-a.jpg" },
   ])
 
-
   const ListItem = ({ todo }) => {
     return (
       <TouchableOpacity style={styles.listItem} onPress={() => { navigation.navigate('Edição', { id: todo?.id }) }}>
@@ -217,8 +216,11 @@ const Home = ({ navigation }) => {
     pegarTasks();
   }, []);
 
+
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+
       <View style={styles.header} >
         <Text style={{ fontWeight: 'bold', fontSize: 20, color: COLORS.primary }}>
           A fazeres:
@@ -323,7 +325,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#222',
     marginLeft: 5,
     borderRadius: 5,
-  }
+  },
+  ModalContainer: {
+    height: 35,
+    width: 35,
+    backgroundColor:'#aaa',
+  },
 
 });
 
