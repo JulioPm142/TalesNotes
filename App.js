@@ -34,33 +34,38 @@ const COLORS = { primary: '#1f145c', white: '#eee' };
 
 
 
+
 const App = () => {
 
-  pegarProfile = async () => {
+  pegarProfileApp = async () => {
     const user = auth().currentUser;
 
     if (user) {
-        try {
-            const userId = user.uid;
-            const userSnapshot = await database()
-                .ref(`Usuarios/${userId}/Profile`)
-                .once("value");
+      try {
+        const userId = user.uid;
+        const userSnapshot = await database()
+          .ref(`Usuarios/${userId}/Profile`)
+          .once("value");
 
-            const userProfile = userSnapshot.val();
-            
-            setImageUri(userProfile)
-            console.log(userProfile)
-        } catch (error) {
-            console.error("Erro ao buscar o perfil do usuário:", error);
-        }
+        const userProfile = userSnapshot.val();
+
+        setImageUri(userProfile)
+        console.log(userProfile)
+      } catch (error) {
+        console.error("Erro ao buscar o perfil do usuário:", error);
+      }
     }
-}
+  }
+
+  const updateImageUri = (newImageUri) => {
+    pegarProfileApp()
+  };
 
   useState(() => {
     // Chama a função para buscar as tarefas do usuário quando a tela for montada
-    pegarProfile();
-    console.log('teste',ImageUri)
-}, []);
+    pegarProfileApp();
+    console.log('teste', ImageUri)
+  }, []);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -109,9 +114,11 @@ const App = () => {
     );
   }
 
-  function signOut() {
+  const signOut = () => {
     auth().signOut();
-  }
+    setImageUri("");
+    toggleModal();
+  };
 
   const toggleModal = () => {
     setModalOpen(!modalOpen)
@@ -131,13 +138,14 @@ const App = () => {
   };
 
   const Profile = () => {
+    pegarProfileApp();
     return (
       <View style={styles.profileContainer}>
-      <View style={styles.profile}>
-        {ImageUri ? (<Image style={{ width: "100%", height: "100%", borderRadius: 250 }} source={{ uri: ImageUri }} resizeMode="contain"  />
+        <View style={styles.profile}>
+          {ImageUri!="" ? (<Image style={{ width: "100%", height: "100%", borderRadius: 250 }} source={{ uri: ImageUri }} resizeMode="contain" />
 
-        ) : <Image style={{ width: "100%", height: "100%", borderRadius: 250 }} source={{ uri: 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg' }} />}
-      </View>
+          ) : <Image style={{ width: "100%", height: "100%", borderRadius: 250 }} source={{ uri: 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg' }} />}
+        </View>
       </View>
     );
   };
@@ -153,12 +161,12 @@ const App = () => {
             <>
               <Stack.Screen name="Home" component={Home} options={{
                 title: 'Home', headerRight: () => (<TouchableOpacity onPress={() => toggleModal()} style={[styles.actionIcon, { backgroundcolor: "red" }]} >
-                  <Profile/>
+                  <Profile />
 
                 </TouchableOpacity>), headerLeft: () => (<View style={[styles.center]}>
                   {modalOpen ? (
                     <>
-                      <Modal />
+                      <Modal updateImageUri={updateImageUri} signOut={signOut}/>
                       <Close />
                     </>
                   ) : (null)}
@@ -253,24 +261,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     alignSelf: 'center',
-    bottom:height*0.73,
-    left:width*0.35
+    bottom: height * 0.73,
+    left: width * 0.35
   },
   profile: {
     backgroundColor: '#eee',
     borderRadius: 150,
-    width: width*0.1,
-    height: width*0.1,
+    width: width * 0.1,
+    height: width * 0.1,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     alignSelf: 'center',
   },
-  profileContainer:{
-    paddingTop:height*0.02,
-    display:'flex',
-    justifyContent:'center',
-    alignItems:'center'
+  profileContainer: {
+    paddingTop: height * 0.02,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 
 });

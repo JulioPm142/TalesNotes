@@ -23,7 +23,7 @@ import { he } from "date-fns/locale";
 
 const COLORS = { primary: "#1f145c", white: "#eee" };
 
-const App = () => {
+const App = ({ updateImageUri, signOut }) => {
     const [modalOpen, setModalOpen] = useState(false)
     const [imageModal, setImageModal] = useState(false);
     const [ImageUri, setImageUri] = useState(null);
@@ -61,8 +61,8 @@ const App = () => {
         });
     };
 
-    function signOut() {
-        auth().signOut();
+    function logOut() {
+        signOut();
     }
 
     const openCamera = () => {
@@ -111,6 +111,7 @@ const App = () => {
                     setImageUri(downloadURL);
 
                     console.log('URL da imagem após o upload:', downloadURL);
+                    updateImageUri(downloadURL);
 
                     const userTaskRef = database().ref(`Usuarios/${user.uid}/`);
                     userTaskRef
@@ -157,10 +158,15 @@ const App = () => {
         }
     }
 
+    useEffect(()=>{
+        pegarProfile();
+    })
+
     useState(() => {
         // Chama a função para buscar as tarefas do usuário quando a tela for montada
         pegarProfile();
         console.log('teste', ImageUri)
+        
     }, []);
 
 
@@ -184,7 +190,7 @@ const App = () => {
                         <Icon2 name='image-edit' size={99} color='#000'></Icon2>
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={() => { (signOut()) }} style={styles.iconContainer}>
+                    <TouchableOpacity onPress={() => { (logOut()) }} style={styles.iconContainer}>
                         <Icon2 name='account-arrow-right' size={99} color='#000'></Icon2>
                     </TouchableOpacity>
 

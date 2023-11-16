@@ -10,7 +10,7 @@ import { format, parseISO, differenceInMilliseconds, addSeconds, setSeconds, add
 const COLORS = { primary: '#1f145c', white: '#eee' };
 
 
-const Home = ({ navigation }) => {
+const Home = ({ navigation, updateImageUri}) => {
   const [textInput, setTextInput] = React.useState("")
   const [todos, setTodos] = React.useState([
     // {titulo:'titulo',texto:'texto', completo: false, expirado: false, imagem: "https://www.educlub.com.br/wp-content/uploads/2020/02/palavras-com-a-letra-a.jpg" },
@@ -214,7 +214,11 @@ const Home = ({ navigation }) => {
   useEffect(() => {
     // Chama a função para buscar as tarefas do usuário quando a tela for montada
     pegarTasks();
+    
+    
   }, []);
+
+  
 
 
 
